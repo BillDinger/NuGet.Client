@@ -216,8 +216,8 @@ namespace NuGet.XPlat.FuncTest
             return new PackageReferenceArgs(project.ProjectPath, packageDependency, logger);
         }
 
-        public static PackageReferenceArgs GetPackageReferenceArgs(string packageId, string packageVersion, SimpleTestProjectContext project,
-            string frameworks = "", string packageDirectory = "", string sources = "", bool noRestore = false, bool noVersion = false)
+        public static PackageReferenceArgs GetPackageReferenceArgs(string packageId, SimpleTestProjectContext project, string packageVersion = "*",
+            string frameworks = "", string packageDirectory = "", string sources = "", bool noRestore = false, bool noVersion = false, bool prerelease = false)
         {
             var logger = new TestCommandOutputLogger();
             var packageDependency = new PackageDependency(packageId, VersionRange.Parse(packageVersion));
@@ -233,7 +233,30 @@ namespace NuGet.XPlat.FuncTest
                 PackageDirectory = packageDirectory,
                 NoRestore = noRestore,
                 NoVersion = noVersion,
-                DgFilePath = dgFilePath
+                DgFilePath = dgFilePath,
+                Prerelease = prerelease
+            };
+        }
+
+        public static PackageReferenceArgs GetPackageReferenceArgs(string packageId, string packageVersion, SimpleTestProjectContext project,
+            string frameworks = "", string packageDirectory = "", string sources = "", bool noRestore = false, bool noVersion = false, bool prerelease = false)
+        {
+            var logger = new TestCommandOutputLogger();
+            var packageDependency = new PackageDependency(packageId, VersionRange.Parse(packageVersion));
+            var dgFilePath = string.Empty;
+            if (!noRestore)
+            {
+                dgFilePath = CreateDGFileForProject(project);
+            }
+            return new PackageReferenceArgs(project.ProjectPath, packageDependency, logger)
+            {
+                Frameworks = MSBuildStringUtility.Split(frameworks),
+                Sources = MSBuildStringUtility.Split(sources),
+                PackageDirectory = packageDirectory,
+                NoRestore = noRestore,
+                NoVersion = noVersion,
+                DgFilePath = dgFilePath,
+                Prerelease = prerelease
             };
         }
 

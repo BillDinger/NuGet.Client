@@ -24,7 +24,7 @@ namespace NuGet.CommandLine.XPlat
                 addpkg.Option(
                     CommandConstants.ForceEnglishOutputOption,
                     Strings.ForceEnglishOutput_Description,
-                    CommandOptionType.NoValue);
+                    CommandOptionType.NoValue);       
 
                 var id = addpkg.Option(
                     "--package",
@@ -71,6 +71,11 @@ namespace NuGet.CommandLine.XPlat
                     Strings.AddPkg_InteractiveDescription,
                     CommandOptionType.NoValue);
 
+                var prerelease = addpkg.Option(
+                    "--prerelease",
+                    Strings.AddPkg_PackagePrerelease,
+                    CommandOptionType.NoValue);
+
                 addpkg.OnExecute(() =>
                 {
                     ValidateArgument(id, addpkg.Name);
@@ -82,8 +87,8 @@ namespace NuGet.CommandLine.XPlat
                     }
                     var logger = getLogger();
                     var noVersion = !version.HasValue();
-                    var packageVersion = version.HasValue() ? version.Value() : "*";
-                    var packageDependency = new PackageDependency(id.Values[0], VersionRange.Parse(packageVersion));
+                    var packageVersion = version.HasValue() ? version.Value() : null;
+                    var packageDependency = packageVersion != null ? new PackageDependency(id.Values[0], VersionRange.Parse(packageVersion)) : null;
                     var packageRefArgs = new PackageReferenceArgs(projectPath.Value(), packageDependency, logger)
                     {
                         Frameworks = CommandLineUtility.SplitAndJoinAcrossMultipleValues(frameworks.Values),
@@ -92,7 +97,8 @@ namespace NuGet.CommandLine.XPlat
                         NoRestore = noRestore.HasValue(),
                         NoVersion = noVersion,
                         DgFilePath = dgFilePath.Value(),
-                        Interactive = interactive.HasValue()
+                        Interactive = interactive.HasValue(),
+                        Prerelease = prerelease.HasValue(),
                     };
                     var msBuild = new MSBuildAPIUtility(logger);
                     var addPackageRefCommandRunner = getCommandRunner();

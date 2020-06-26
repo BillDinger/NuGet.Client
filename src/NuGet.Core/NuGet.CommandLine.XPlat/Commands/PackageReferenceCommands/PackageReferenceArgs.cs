@@ -20,8 +20,8 @@ namespace NuGet.CommandLine.XPlat
         public string[] Sources { get; set; }
         public string PackageDirectory { get; set; }
         public bool NoRestore { get; set; }
-
         public bool Interactive { get; set; }
+        public bool Prerelease { get; set;}
 
         public PackageReferenceArgs(string projectPath, PackageDependency packageDependency, ILogger logger, bool noVersion)
         {

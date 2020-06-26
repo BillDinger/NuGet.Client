@@ -26,21 +26,22 @@ namespace NuGet.XPlat.FuncTest
         // Argument parsing related tests
 
         [Theory]
-        [InlineData("--package", "package_foo", "--version", "1.0.0-foo", "--dg-file", "dgfile_foo", "--project", "project_foo.csproj", "", "", "", "", "", "", "", "")]
-        [InlineData("--package", "package_foo", "--version", "1.0.0-foo", "-d", "dgfile_foo", "-p", "project_foo.csproj", "", "", "", "", "", "", "", "")]
-        [InlineData("--package", "package_foo", "--version", "1.0.0-foo", "-d", "dgfile_foo", "-p", "project_foo.csproj", "--framework", "net46;netcoreapp1.0", "", "", "", "", "", "")]
-        [InlineData("--package", "package_foo", "--version", "1.0.0-foo", "-d", "dgfile_foo", "-p", "project_foo.csproj", "-f", "net46 ; netcoreapp1.0 ; ", "", "", "", "", "", "")]
-        [InlineData("--package", "package_foo", "--version", "1.0.0-foo", "-d", "dgfile_foo", "-p", "project_foo.csproj", "-f", "net46", "", "", "", "", "", "")]
-        [InlineData("--package", "package_foo", "--version", "1.0.0-foo", "-d", "dgfile_foo", "-p", "project_foo.csproj", "", "", "--source", "a;b", "", "", "", "")]
-        [InlineData("--package", "package_foo", "--version", "1.0.0-foo", "-d", "dgfile_foo", "-p", "project_foo.csproj", "", "", "-s", "a ; b ;", "", "", "", "")]
-        [InlineData("--package", "package_foo", "--version", "1.0.0-foo", "-d", "dgfile_foo", "-p", "project_foo.csproj", "", "", "-s", "a", "", "", "", "")]
-        [InlineData("--package", "package_foo", "--version", "1.0.0-foo", "-d", "dgfile_foo", "-p", "project_foo.csproj", "", "", "", "", "--package-directory", @"foo\dir", "", "")]
-        [InlineData("--package", "package_foo", "--version", "1.0.0-foo", "-d", "dgfile_foo", "-p", "project_foo.csproj", "", "", "", "", "", "", "--no-restore", "")]
-        [InlineData("--package", "package_foo", "--version", "1.0.0-foo", "-d", "dgfile_foo", "-p", "project_foo.csproj", "", "", "", "", "", "", "-n", "")]
-        [InlineData("--package", "package_foo", "--version", "1.0.0-foo", "-d", "dgfile_foo", "-p", "project_foo.csproj", "", "", "", "", "", "", "-n", "--interactive")]
+        [InlineData("--package", "package_foo", "--version", "1.0.0-foo", "--dg-file", "dgfile_foo", "--project", "project_foo.csproj", "", "", "", "", "", "", "", "", "")]
+        [InlineData("--package", "package_foo", "--version", "1.0.0-foo", "-d", "dgfile_foo", "-p", "project_foo.csproj", "", "", "", "", "", "", "", "", "")]
+        [InlineData("--package", "package_foo", "--version", "1.0.0-foo", "-d", "dgfile_foo", "-p", "project_foo.csproj", "--framework", "net46;netcoreapp1.0", "", "", "", "", "", "", "")]
+        [InlineData("--package", "package_foo", "--version", "1.0.0-foo", "-d", "dgfile_foo", "-p", "project_foo.csproj", "-f", "net46 ; netcoreapp1.0 ; ", "", "", "", "", "", "", "")]
+        [InlineData("--package", "package_foo", "--version", "1.0.0-foo", "-d", "dgfile_foo", "-p", "project_foo.csproj", "-f", "net46", "", "", "", "", "", "", "")]
+        [InlineData("--package", "package_foo", "--version", "1.0.0-foo", "-d", "dgfile_foo", "-p", "project_foo.csproj", "", "", "--source", "a;b", "", "", "", "", "")]
+        [InlineData("--package", "package_foo", "--version", "1.0.0-foo", "-d", "dgfile_foo", "-p", "project_foo.csproj", "", "", "-s", "a ; b ;", "", "", "", "", "")]
+        [InlineData("--package", "package_foo", "--version", "1.0.0-foo", "-d", "dgfile_foo", "-p", "project_foo.csproj", "", "", "-s", "a", "", "", "", "", "")]
+        [InlineData("--package", "package_foo", "--version", "1.0.0-foo", "-d", "dgfile_foo", "-p", "project_foo.csproj", "", "", "", "", "--package-directory", @"foo\dir", "", "", "")]
+        [InlineData("--package", "package_foo", "--version", "1.0.0-foo", "-d", "dgfile_foo", "-p", "project_foo.csproj", "", "", "", "", "", "", "--no-restore", "", "")]
+        [InlineData("--package", "package_foo", "--version", "1.0.0-foo", "-d", "dgfile_foo", "-p", "project_foo.csproj", "", "", "", "", "", "", "-n", "", "")]
+        [InlineData("--package", "package_foo", "--version", "1.0.0-foo", "-d", "dgfile_foo", "-p", "project_foo.csproj", "", "", "", "", "", "", "-n", "--interactive", "")]
+        [InlineData("--package", "package_foo", "--version", "1.0.0-foo", "-d", "dgfile_foo", "-p", "project_foo.csproj", "", "", "", "", "", "", "", "", "--prerelease")]
         public void AddPkg_ArgParsing(string packageOption, string package, string versionOption, string version, string dgFileOption,
             string dgFilePath, string projectOption, string project, string frameworkOption, string frameworkString, string sourceOption,
-            string sourceString, string packageDirectoryOption, string packageDirectory, string noRestoreSwitch, string interactiveSwitch)
+            string sourceString, string packageDirectoryOption, string packageDirectory, string noRestoreSwitch, string interactiveSwitch, string prereleaseOption)
         {
             // Arrange
             using (var testDirectory = TestDirectory.Create())
@@ -90,6 +91,11 @@ namespace NuGet.XPlat.FuncTest
                 {
                     argList.Add(interactiveSwitch);
                 }
+                if (!string.IsNullOrEmpty(prereleaseOption))
+                {
+                    argList.Add(prereleaseOption);
+                }
+
 
                 var logger = new TestCommandOutputLogger();
                 var testApp = new CommandLineApplication();
@@ -160,6 +166,49 @@ namespace NuGet.XPlat.FuncTest
                 Assert.True(XPlatTestUtils.ValidateAssetsFile(projectA, packageX.Id));
             }
         }
+
+        public static readonly List<object[]> AddPkg_PackageVersionsLatestPrereleaseSucessData
+            = new List<object[]>
+            {
+                    new object[] { new string[] { "0.0.5", "0.9.0", "1.0.0-preview.3" }, "1.0.0-preview.3", true },
+                    new object[] { new string[] { "0.0.5", "0.9.0", "1.0.0-preview.3", "1.1.1-preview.7" }, "1.1.1-preview.7", true },
+                    new object[] { new string[] { "0.0.5", "0.9.0", "1.0.0" }, "1.0.0", true },
+                    new object[] { new string[] { "0.0.5", "0.9.0", "1.0.0-preview.3", "2.0.0" }, "2.0.0", true },
+                    new object[] { new string[] { "0.0.5", "0.9.0", "1.0.0-preview.3" }, "0.9.0", false },
+                    new object[] { new string[] { "0.0.5", "0.9.0", "1.0.0-preview.3", "1.0.0" }, "1.0.0", false },
+                    new object[] { new string[] { "0.0.5", "0.9.0", "1.0.0" }, "1.0.0", false },
+            };
+
+        [Theory]
+        [MemberData(nameof(AddPkg_PackageVersionsLatestPrereleaseSucessData))]
+        public async Task AddPkg_UnconditionalAddPrereleaseSucess(string[] inputVersions, string expectedVersion, bool prerelease)
+        {
+            // Arrange
+            using (var pathContext = new SimpleTestPathContext())
+            {
+                var projectA = XPlatTestUtils.CreateProject(ProjectName, pathContext, "net46; netcoreapp1.0");
+                var packages = inputVersions.Select(e => XPlatTestUtils.CreatePackage(packageVersion: e)).ToArray();
+
+                // Generate Package
+                await SimpleTestPackageUtility.CreateFolderFeedV3Async(
+                    pathContext.PackageSource,
+                    PackageSaveMode.Defaultv3,
+                    packages);
+
+                var packageArgs = XPlatTestUtils.GetPackageReferenceArgs(packages[0].Id, projectA, noVersion: true, prerelease: prerelease);
+                var commandRunner = new AddPackageReferenceCommandRunner();
+                var msBuild = MsBuild;
+
+                // Act
+                var result = commandRunner.ExecuteCommand(packageArgs, msBuild).Result;
+                var projectXmlRoot = XPlatTestUtils.LoadCSProj(projectA.ProjectPath).Root;
+
+                // Assert
+                Assert.Equal(0, result);
+                Assert.True(XPlatTestUtils.ValidateReference(projectXmlRoot, packages[0].Id, expectedVersion));
+            }
+        }
+
 
         [Theory]
         [InlineData("1.0.0")]

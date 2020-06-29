@@ -38,7 +38,6 @@ namespace NuGet.XPlat.FuncTest
         [InlineData("--package", "package_foo", "--version", "1.0.0-foo", "-d", "dgfile_foo", "-p", "project_foo.csproj", "", "", "", "", "", "", "--no-restore", "", "")]
         [InlineData("--package", "package_foo", "--version", "1.0.0-foo", "-d", "dgfile_foo", "-p", "project_foo.csproj", "", "", "", "", "", "", "-n", "", "")]
         [InlineData("--package", "package_foo", "--version", "1.0.0-foo", "-d", "dgfile_foo", "-p", "project_foo.csproj", "", "", "", "", "", "", "-n", "--interactive", "")]
-        [InlineData("--package", "package_foo", "--version", "1.0.0-foo", "-d", "dgfile_foo", "-p", "project_foo.csproj", "", "", "", "", "", "", "", "", "--prerelease")]
         public void AddPkg_ArgParsing(string packageOption, string package, string versionOption, string version, string dgFileOption,
             string dgFilePath, string projectOption, string project, string frameworkOption, string frameworkString, string sourceOption,
             string sourceString, string packageDirectoryOption, string packageDirectory, string noRestoreSwitch, string interactiveSwitch, string prereleaseOption)
@@ -115,8 +114,8 @@ namespace NuGet.XPlat.FuncTest
                 XPlatTestUtils.DisposeTemporaryFile(projectPath);
 
                 // Assert
-                mockCommandRunner.Verify(m => m.ExecuteCommand(It.Is<PackageReferenceArgs>(p => p.PackageDependency.Id == package &&
-                p.PackageDependency.VersionRange.OriginalString == version &&
+                mockCommandRunner.Verify(m => m.ExecuteCommand(It.Is<PackageReferenceArgs>(p => p.PackageId == package &&
+                p.PackageVersion == version &&
                 p.ProjectPath == projectPath &&
                 p.DgFilePath == dgFilePath &&
                 p.NoRestore == !string.IsNullOrEmpty(noRestoreSwitch) &&
@@ -208,7 +207,6 @@ namespace NuGet.XPlat.FuncTest
                 Assert.True(XPlatTestUtils.ValidateReference(projectXmlRoot, packages[0].Id, expectedVersion));
             }
         }
-
 
         [Theory]
         [InlineData("1.0.0")]

@@ -212,21 +212,21 @@ namespace NuGet.XPlat.FuncTest
         public static PackageReferenceArgs GetPackageReferenceArgs(string packageId, SimpleTestProjectContext project)
         {
             var logger = new TestCommandOutputLogger();
-            var packageDependency = new PackageDependency(packageId);
-            return new PackageReferenceArgs(project.ProjectPath, packageDependency, logger);
+            return new PackageReferenceArgs(project.ProjectPath, logger) {
+                PackageId = packageId
+            };
         }
 
         public static PackageReferenceArgs GetPackageReferenceArgs(string packageId, SimpleTestProjectContext project, string packageVersion = "*",
             string frameworks = "", string packageDirectory = "", string sources = "", bool noRestore = false, bool noVersion = false, bool prerelease = false)
         {
             var logger = new TestCommandOutputLogger();
-            var packageDependency = new PackageDependency(packageId, VersionRange.Parse(packageVersion));
             var dgFilePath = string.Empty;
             if (!noRestore)
             {
                 dgFilePath = CreateDGFileForProject(project);
             }
-            return new PackageReferenceArgs(project.ProjectPath, packageDependency, logger)
+            return new PackageReferenceArgs(project.ProjectPath, logger)
             {
                 Frameworks = MSBuildStringUtility.Split(frameworks),
                 Sources = MSBuildStringUtility.Split(sources),
@@ -234,7 +234,9 @@ namespace NuGet.XPlat.FuncTest
                 NoRestore = noRestore,
                 NoVersion = noVersion,
                 DgFilePath = dgFilePath,
-                Prerelease = prerelease
+                Prerelease = prerelease,
+                PackageVersion = packageVersion,
+                PackageId = packageId
             };
         }
 
@@ -242,13 +244,12 @@ namespace NuGet.XPlat.FuncTest
             string frameworks = "", string packageDirectory = "", string sources = "", bool noRestore = false, bool noVersion = false, bool prerelease = false)
         {
             var logger = new TestCommandOutputLogger();
-            var packageDependency = new PackageDependency(packageId, VersionRange.Parse(packageVersion));
             var dgFilePath = string.Empty;
             if (!noRestore)
             {
                 dgFilePath = CreateDGFileForProject(project);
             }
-            return new PackageReferenceArgs(project.ProjectPath, packageDependency, logger)
+            return new PackageReferenceArgs(project.ProjectPath, logger)
             {
                 Frameworks = MSBuildStringUtility.Split(frameworks),
                 Sources = MSBuildStringUtility.Split(sources),
@@ -256,7 +257,9 @@ namespace NuGet.XPlat.FuncTest
                 NoRestore = noRestore,
                 NoVersion = noVersion,
                 DgFilePath = dgFilePath,
-                Prerelease = prerelease
+                Prerelease = prerelease,
+                PackageVersion = packageVersion,
+                PackageId = packageId
             };
         }
 

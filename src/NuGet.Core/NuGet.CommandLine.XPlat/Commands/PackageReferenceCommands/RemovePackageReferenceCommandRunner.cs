@@ -6,6 +6,7 @@ using System.Globalization;
 using System.Threading.Tasks;
 using NuGet.Credentials;
 using NuGet.LibraryModel;
+using NuGet.Versioning;
 
 namespace NuGet.CommandLine.XPlat
 {
@@ -15,7 +16,7 @@ namespace NuGet.CommandLine.XPlat
         {
             packageReferenceArgs.Logger.LogInformation(string.Format(CultureInfo.CurrentCulture,
                 Strings.Info_RemovePkgRemovingReference,
-                packageReferenceArgs.PackageDependency.Id,
+                packageReferenceArgs.PackageId,
                 packageReferenceArgs.ProjectPath));
 
             //Setup the Credential Service - This allows the msbuild sdk resolver to auth if needed.
@@ -24,8 +25,8 @@ namespace NuGet.CommandLine.XPlat
             var libraryDependency = new LibraryDependency
             {
                 LibraryRange = new LibraryRange(
-                    name: packageReferenceArgs.PackageDependency.Id,
-                    versionRange: packageReferenceArgs.PackageDependency.VersionRange,
+                    name: packageReferenceArgs.PackageId,
+                    versionRange: packageReferenceArgs.PackageVersion != null ? VersionRange.Parse(packageReferenceArgs.PackageVersion) : VersionRange.Parse("*"),
                     typeConstraint: LibraryDependencyTarget.Package)
             };
 

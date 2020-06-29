@@ -648,7 +648,7 @@ For more information, visit https://docs.nuget.org/docs/reference/command-line-r
   <data name="Option_ConfigFile" xml:space="preserve">
     <value>The NuGet configuration file. If specified, only the settings from this file will be used. If not specified, the hierarchy of configuration files from the current directory will be used. For more information, see https://docs.microsoft.com/nuget/consume-packages/configuring-nuget-behavior.</value>
   </data>
-   <data name="Option_ConfigFile_Docs" xml:space="preserve">
+  <data name="Option_ConfigFile_Docs" xml:space="preserve">
     <value>The NuGet configuration file. If specified, only the settings from this file will be used. If not specified, the hierarchy of configuration files from the current directory will be used. For more information, see [Common NuGet Configurations](https://docs.microsoft.com/nuget/consume-packages/configuring-nuget-behavior).</value>
   </data>
   <data name="Option_PackageSource" xml:space="preserve">
@@ -711,5 +711,11 @@ For more information, visit https://docs.nuget.org/docs/reference/command-line-r
   </data>
   <data name="AddClientCertCommandDescription" xml:space="preserve">
     <value>Adds a client certificate configuration that matches the given package source name.</value>
+  </data>
+  <data name="AddPkg_PackagePrerelease" xml:space="preserve">
+    <value>Consider prerelease packages when determining the latest version to install.</value>
+  </data>
+  <data name="Error_PrereleaseWhenVersionSpecified" xml:space="preserve">
+    <value>Prerelease and Version options cannot be combined.</value>
   </data>
 </root>

@@ -22,26 +22,20 @@ namespace NuGet.CommandLine.XPlat
         public bool NoRestore { get; set; }
         public bool Interactive { get; set; }
         public bool Prerelease { get; set;}
-
-        public PackageReferenceArgs(string projectPath, PackageDependency packageDependency, ILogger logger, bool noVersion)
+        public string PackageId { get; set; }
+        public string PackageVersion { get; set; }
+        public PackageReferenceArgs(string projectPath, ILogger logger, bool noVersion)
         {
             ValidateArgument(projectPath);
-            ValidateArgument(packageDependency);
             ValidateArgument(logger);
 
             ProjectPath = projectPath;
-            PackageDependency = packageDependency;
             Logger = logger;
             NoVersion = noVersion;
         }
 
-        public PackageReferenceArgs(string projectPath, PackageDependency packageDependency, ILogger logger) :
-            this(projectPath, packageDependency, logger, noVersion: false)
-        {
-        }
-
-        public PackageReferenceArgs(string projectPath, string packageId, ILogger logger) :
-            this(projectPath, new PackageDependency(packageId), logger, noVersion: true)
+        public PackageReferenceArgs(string projectPath, ILogger logger) :
+            this(projectPath, logger, noVersion: false)
         {
         }
 

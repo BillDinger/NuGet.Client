@@ -2,10 +2,7 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
-using System.IO;
 using NuGet.Common;
-using NuGet.Configuration;
-using NuGet.Packaging.Core;
 
 namespace NuGet.CommandLine.XPlat
 {
@@ -14,7 +11,6 @@ namespace NuGet.CommandLine.XPlat
         public string ProjectPath { get; }
         public ILogger Logger { get; }
         public bool NoVersion { get; set; }
-        public PackageDependency PackageDependency { get; set; }
         public string DgFilePath { get; set; }
         public string[] Frameworks { get; set; }
         public string[] Sources { get; set; }
@@ -24,6 +20,7 @@ namespace NuGet.CommandLine.XPlat
         public bool Prerelease { get; set;}
         public string PackageId { get; set; }
         public string PackageVersion { get; set; }
+        
         public PackageReferenceArgs(string projectPath, ILogger logger, bool noVersion)
         {
             ValidateArgument(projectPath);

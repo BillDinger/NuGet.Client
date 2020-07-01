@@ -412,6 +412,15 @@ namespace NuGet.CommandLine.XPlat {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to There are no stable version available for this package. Try adding the prerelease option to add the latest non stable version available..
+        /// </summary>
+        internal static string Error_NoPrereleaseVersions {
+            get {
+                return ResourceManager.GetString("Error_NoPrereleaseVersions", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The project `{0}` uses package.config for NuGet packages, while the command works only with package reference projects..
         /// </summary>
         internal static string Error_NotPRProject {
@@ -439,7 +448,7 @@ namespace NuGet.CommandLine.XPlat {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Prerelease and Version options cannot be combined..
+        ///   Looks up a localized string similar to Both operations, --prerelease and --version, are not supported in the same command. Plsease specify only one operation..
         /// </summary>
         internal static string Error_PrereleaseWhenVersionSpecified {
             get {

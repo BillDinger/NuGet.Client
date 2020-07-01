@@ -17,11 +17,10 @@ using NuGet.LibraryModel;
 using NuGet.Packaging;
 using NuGet.Packaging.Core;
 using NuGet.ProjectModel;
-using NuGet.Protocol;
 using NuGet.Protocol.Core.Types;
 using NuGet.Versioning;
 
-namespace NuGet.CommandLine.XPlat
+namespace NuGet.CommandLine.XPlat.Utility
 {
     public class AddPackageReferenceCommandRunner : IPackageReferenceCommandRunner
     {
@@ -38,12 +37,16 @@ namespace NuGet.CommandLine.XPlat
                 packageReferenceArgs.Logger.LogWarning(string.Format(CultureInfo.CurrentCulture,
                     Strings.Warn_AddPkgWithoutRestore));
 
-                VersionRange versionRange = VersionRange.Parse(packageReferenceArgs.PackageVersion);
+
+                VersionRange versionRange = default;
                 if (packageReferenceArgs.NoVersion)
                 {
                     versionRange = packageReferenceArgs.Prerelease ?
                                         VersionRange.Parse("*-*") :
                                         VersionRange.Parse("*");
+                } else
+                {
+                    versionRange = VersionRange.Parse(packageReferenceArgs.PackageVersion);
                 }
                 var libraryDependency = new LibraryDependency
                 {
@@ -96,22 +99,17 @@ namespace NuGet.CommandLine.XPlat
                     .Select(f => NuGetFramework.Parse(f));
             }
 
-
             var originalPackageSpec = matchingPackageSpecs.FirstOrDefault();
 
-            PackageDependency packageDependency = new PackageDependency(packageReferenceArgs.PackageId, VersionRange.Parse(packageReferenceArgs.PackageVersion));
+            PackageDependency packageDependency = default;
             if (packageReferenceArgs.NoVersion)
             {
-                if (packageReferenceArgs.Prerelease)
-                {
-                    var latestVersion = await GetLatestVersion(originalPackageSpec, packageReferenceArgs.PackageId, packageReferenceArgs.Logger, prerelease: true);
-                    packageDependency = new PackageDependency(packageReferenceArgs.PackageId, VersionRange.Parse(latestVersion.ToString()));
-                }
-                else
-                {
-                    var latestVersion = await GetLatestVersion(originalPackageSpec, packageReferenceArgs.PackageId, packageReferenceArgs.Logger, prerelease: false);
-                    packageDependency = new PackageDependency(packageReferenceArgs.PackageId, VersionRange.Parse(latestVersion.ToString()));
-                }
+                var latestVersion = await GetLatestVersion(originalPackageSpec, packageReferenceArgs.PackageId, packageReferenceArgs.Logger, packageReferenceArgs.Prerelease);
+                packageDependency = new PackageDependency(packageReferenceArgs.PackageId, VersionRange.Parse(latestVersion.ToString()));
+            }
+            else
+            {
+                packageDependency = new PackageDependency(packageReferenceArgs.PackageId, VersionRange.Parse(packageReferenceArgs.PackageVersion));
             }
 
             // Create a copy to avoid modifying the original spec which may be shared.
@@ -214,87 +212,11 @@ namespace NuGet.CommandLine.XPlat
             return 0;
         }
 
-        private static async Task<NuGetVersion> GetLatestVersionFromSources(IList<PackageSource> sources, ILogger logger, string packageId, bool prerelease)
+        public static async Task<NuGetVersion> GetLatestVersion(PackageSpec originalPackageSpec, string packageId, ILogger logger, bool prerelease)
         {
-            var maxTasks = Environment.ProcessorCount;
-            var tasks = new List<Task<NuGetVersion>>();
-            var latestReleaseList = new List<NuGetVersion>();
-
-            foreach (var source in sources)
-            {
-                tasks.Add(Task.Run(() => GetLatesVersionFromSource(source, logger, packageId, prerelease)));
-                if (maxTasks <= tasks.Count)
-                {
-                    var finishedTask = await Task.WhenAny(tasks);
-                    tasks.Remove(finishedTask);
-                    latestReleaseList.Add(await finishedTask);
-                }
-            }
-
-            await Task.WhenAll(tasks);
-
-            foreach (var t in tasks)
-            {
-                latestReleaseList.Add(await t);
-            }
-
-            return latestReleaseList.Max();
+            IList<PackageSource> sources = GetLatestVersionUtility.EvaluateSources(originalPackageSpec.RestoreMetadata.Sources, originalPackageSpec.RestoreMetadata.ConfigFilePaths);
+            return await GetLatestVersionUtility.GetLatestVersionFromSources(sources, logger, packageId, prerelease); ;
         }
-
-
-        private static List<PackageSource> EvaluateSources(IList<PackageSource> requestedSources, IList<string> configFilePaths)
-        {
-            using (var settingsLoadingContext = new SettingsLoadingContext())
-            {
-                var settings = Settings.LoadImmutableSettingsGivenConfigPaths(configFilePaths, settingsLoadingContext);
-                var packageSources = new List<PackageSource>();
-
-                var packageSourceProvider = new PackageSourceProvider(settings);
-                var packageProviderSources = packageSourceProvider.LoadPackageSources();
-
-                for (var i = 0; i < requestedSources.Count; i++)
-                {
-                    var matchedSource = packageProviderSources.FirstOrDefault(e => e.Source == requestedSources[i].Source);
-                    if (matchedSource == null)
-                    {
-                        packageSources.Add(requestedSources[i]);
-                    }
-                    else
-                    {
-                        packageSources.Add(matchedSource);
-                    }
-                }
-
-                return packageSources;
-            }
-        }
-
-        private static async Task<NuGetVersion> GetLatesVersionFromSource(PackageSource source, ILogger logger, string packageId, bool prerelease)
-        {
-            SourceRepository repository = Repository.Factory.GetCoreV3(source);
-            PackageMetadataResource resource = await repository.GetResourceAsync<PackageMetadataResource>();
-
-            using (var cache = new SourceCacheContext())
-            {
-                IEnumerable<IPackageSearchMetadata> packages = await resource.GetMetadataAsync(
-                    packageId,
-                    includePrerelease: prerelease,
-                    includeUnlisted: false,
-                    cache,
-                    logger,
-                    CancellationToken.None
-                );
-
-                return packages.LastOrDefault()?.Identity.Version;
-            }
-        }
-
-        private async Task<NuGetVersion> GetLatestVersion(PackageSpec originalPackageSpec, string packageId, ILogger logger, bool prerelease)
-        {
-            IList<PackageSource> sources = EvaluateSources(originalPackageSpec.RestoreMetadata.Sources, originalPackageSpec.RestoreMetadata.ConfigFilePaths);
-            return await GetLatestVersionFromSources(sources, logger, packageId, prerelease);
-        }
-
         private static LibraryDependency GenerateLibraryDependency(
             PackageSpec project,
             PackageReferenceArgs packageReferenceArgs,

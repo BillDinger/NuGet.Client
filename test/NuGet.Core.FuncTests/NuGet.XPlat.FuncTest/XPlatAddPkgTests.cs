@@ -1,6 +1,7 @@
 // Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -8,6 +9,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.CommandLineUtils;
 using Moq;
 using NuGet.CommandLine.XPlat;
+using NuGet.CommandLine.XPlat.Utility;
 using NuGet.Common;
 using NuGet.Packaging;
 using NuGet.Packaging.Core;
@@ -38,6 +40,7 @@ namespace NuGet.XPlat.FuncTest
         [InlineData("--package", "package_foo", "--version", "1.0.0-foo", "-d", "dgfile_foo", "-p", "project_foo.csproj", "", "", "", "", "", "", "--no-restore", "", "")]
         [InlineData("--package", "package_foo", "--version", "1.0.0-foo", "-d", "dgfile_foo", "-p", "project_foo.csproj", "", "", "", "", "", "", "-n", "", "")]
         [InlineData("--package", "package_foo", "--version", "1.0.0-foo", "-d", "dgfile_foo", "-p", "project_foo.csproj", "", "", "", "", "", "", "-n", "--interactive", "")]
+        [InlineData("--package", "package_foo", "", "", "-d", "dgfile_foo", "-p", "project_foo.csproj", "", "", "", "", "", "", "", "", "--prerelease")]
         public void AddPkg_ArgParsing(string packageOption, string package, string versionOption, string version, string dgFileOption,
             string dgFilePath, string projectOption, string project, string frameworkOption, string frameworkString, string sourceOption,
             string sourceString, string packageDirectoryOption, string packageDirectory, string noRestoreSwitch, string interactiveSwitch, string prereleaseOption)
@@ -54,13 +57,19 @@ namespace NuGet.XPlat.FuncTest
                 "add",
                 packageOption,
                 package,
-                versionOption,
-                version,
                 dgFileOption,
                 dgFilePath,
                 projectOption,
                 projectPath};
 
+                if (!string.IsNullOrEmpty(versionOption))
+                {
+                    argList.Add(versionOption);
+                }
+                if (!string.IsNullOrEmpty(version))
+                {
+                    argList.Add(version);
+                }
                 if (!string.IsNullOrEmpty(frameworkOption))
                 {
                     foreach (var framework in frameworks)
@@ -95,7 +104,6 @@ namespace NuGet.XPlat.FuncTest
                     argList.Add(prereleaseOption);
                 }
 
-
                 var logger = new TestCommandOutputLogger();
                 var testApp = new CommandLineApplication();
                 var mockCommandRunner = new Mock<IPackageReferenceCommandRunner>();
@@ -115,16 +123,103 @@ namespace NuGet.XPlat.FuncTest
 
                 // Assert
                 mockCommandRunner.Verify(m => m.ExecuteCommand(It.Is<PackageReferenceArgs>(p => p.PackageId == package &&
-                p.PackageVersion == version &&
+                (!string.IsNullOrEmpty(versionOption) == string.IsNullOrEmpty(prereleaseOption) ||
+                    (string.IsNullOrEmpty(versionOption) == !string.IsNullOrEmpty(prereleaseOption) && p.PackageVersion == version)) &&
                 p.ProjectPath == projectPath &&
                 p.DgFilePath == dgFilePath &&
                 p.NoRestore == !string.IsNullOrEmpty(noRestoreSwitch) &&
                 (string.IsNullOrEmpty(frameworkOption) || !string.IsNullOrEmpty(frameworkOption) && p.Frameworks.SequenceEqual(frameworks)) &&
                 (string.IsNullOrEmpty(sourceOption) || !string.IsNullOrEmpty(sourceOption) && p.Sources.SequenceEqual(MSBuildStringUtility.Split(sourceString))) &&
-                (string.IsNullOrEmpty(packageDirectoryOption) || !string.IsNullOrEmpty(packageDirectoryOption) && p.PackageDirectory == packageDirectory) && p.Interactive == !string.IsNullOrEmpty(interactiveSwitch)),
+                (string.IsNullOrEmpty(packageDirectoryOption) || !string.IsNullOrEmpty(packageDirectoryOption) && p.PackageDirectory == packageDirectory) &&
+                p.Interactive == !string.IsNullOrEmpty(interactiveSwitch) &&
+                p.Prerelease == !string.IsNullOrEmpty(prereleaseOption)),
                 It.IsAny<MSBuildAPIUtility>()));
 
                 Assert.Equal(0, result);
+            }
+        }
+
+        [Theory]
+        [InlineData("--package", "package_foo", "--version", "1.0.0-foo", "-d", "dgfile_foo", "-p", "project_foo.csproj", "", "", "", "", "", "", "", "", "--prerelease")]
+        public void AddPkg_Error_ArgParsingPrerelease(string packageOption, string package, string versionOption, string version, string dgFileOption,
+            string dgFilePath, string projectOption, string project, string frameworkOption, string frameworkString, string sourceOption,
+            string sourceString, string packageDirectoryOption, string packageDirectory, string noRestoreSwitch, string interactiveSwitch, string prereleaseOption)
+        {
+            // Arrange
+            using (var testDirectory = TestDirectory.Create())
+            {
+                var projectPath = Path.Combine(testDirectory, project);
+                var frameworks = MSBuildStringUtility.Split(frameworkString);
+                var sources = MSBuildStringUtility.Split(sourceString);
+                File.Create(projectPath).Dispose();
+
+                var argList = new List<string>() {
+                "add",
+                packageOption,
+                package,
+                dgFileOption,
+                dgFilePath,
+                projectOption,
+                projectPath};
+
+                if (!string.IsNullOrEmpty(versionOption))
+                {
+                    argList.Add(versionOption);
+                }
+                if (!string.IsNullOrEmpty(version))
+                {
+                    argList.Add(version);
+                }
+                if (!string.IsNullOrEmpty(frameworkOption))
+                {
+                    foreach (var framework in frameworks)
+                    {
+                        argList.Add(frameworkOption);
+                        argList.Add(framework);
+                    }
+                }
+                if (!string.IsNullOrEmpty(sourceOption))
+                {
+                    foreach (var source in sources)
+                    {
+                        argList.Add(sourceOption);
+                        argList.Add(source);
+                    }
+                }
+                if (!string.IsNullOrEmpty(packageDirectoryOption))
+                {
+                    argList.Add(packageDirectoryOption);
+                    argList.Add(packageDirectory);
+                }
+                if (!string.IsNullOrEmpty(noRestoreSwitch))
+                {
+                    argList.Add(noRestoreSwitch);
+                }
+                if (!string.IsNullOrEmpty(interactiveSwitch))
+                {
+                    argList.Add(interactiveSwitch);
+                }
+                if (!string.IsNullOrEmpty(prereleaseOption))
+                {
+                    argList.Add(prereleaseOption);
+                }
+
+                var logger = new TestCommandOutputLogger();
+                var testApp = new CommandLineApplication();
+                var mockCommandRunner = new Mock<IPackageReferenceCommandRunner>();
+                mockCommandRunner
+                    .Setup(m => m.ExecuteCommand(It.IsAny<PackageReferenceArgs>(), It.IsAny<MSBuildAPIUtility>()))
+                    .ReturnsAsync(0);
+
+                testApp.Name = "dotnet nuget_test";
+                AddPackageReferenceCommand.Register(testApp,
+                    () => logger,
+                    () => mockCommandRunner.Object);
+
+                // Act
+                // Assert
+                Assert.Throws<ArgumentException>(() => testApp.Execute(argList.ToArray()));
+                XPlatTestUtils.DisposeTemporaryFile(projectPath);
             }
         }
 
@@ -176,6 +271,7 @@ namespace NuGet.XPlat.FuncTest
                     new object[] { new string[] { "0.0.5", "0.9.0", "1.0.0-preview.3" }, "0.9.0", false },
                     new object[] { new string[] { "0.0.5", "0.9.0", "1.0.0-preview.3", "1.0.0" }, "1.0.0", false },
                     new object[] { new string[] { "0.0.5", "0.9.0", "1.0.0" }, "1.0.0", false },
+                    new object[] { new string[] { "1.0.0-preview.1", "1.0.0-preview.2", "1.0.0-preview.3" }, "1.0.0-preview.3", true },
             };
 
         [Theory]
@@ -205,6 +301,38 @@ namespace NuGet.XPlat.FuncTest
                 // Assert
                 Assert.Equal(0, result);
                 Assert.True(XPlatTestUtils.ValidateReference(projectXmlRoot, packages[0].Id, expectedVersion));
+            }
+        }
+
+        public static readonly List<object[]> AddPkg_PackageVersionsLatestPrereleasNoStableAvailableData
+            = new List<object[]>
+            {
+                    new object[] { new string[] { "1.0.0-preview.1", "1.0.0-preview.2", "1.0.0-preview.3" }, false },
+            };
+
+        [Theory]
+        [MemberData(nameof(AddPkg_PackageVersionsLatestPrereleasNoStableAvailableData))]
+        public async Task AddPkg_UnconditionalAddPrereleaseNoStableAvailable(string[] inputVersions, bool prerelease)
+        {
+            // Arrange
+            using (var pathContext = new SimpleTestPathContext())
+            {
+                var projectA = XPlatTestUtils.CreateProject(ProjectName, pathContext, "net46; netcoreapp1.0");
+                var packages = inputVersions.Select(e => XPlatTestUtils.CreatePackage(packageVersion: e)).ToArray();
+
+                // Generate Package
+                await SimpleTestPackageUtility.CreateFolderFeedV3Async(
+                    pathContext.PackageSource,
+                    PackageSaveMode.Defaultv3,
+                    packages);
+
+                var packageArgs = XPlatTestUtils.GetPackageReferenceArgs(packages[0].Id, projectA, noVersion: true, prerelease: prerelease);
+                var commandRunner = new AddPackageReferenceCommandRunner();
+                var msBuild = MsBuild;
+
+                // Act
+                // Assert
+                await Assert.ThrowsAsync<ArgumentException>(() => commandRunner.ExecuteCommand(packageArgs, msBuild));
             }
         }
 

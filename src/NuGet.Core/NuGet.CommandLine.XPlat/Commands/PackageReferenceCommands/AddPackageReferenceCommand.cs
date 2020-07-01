@@ -6,8 +6,6 @@ using System.Globalization;
 using System.IO;
 using Microsoft.Extensions.CommandLineUtils;
 using NuGet.Common;
-using NuGet.Packaging.Core;
-using NuGet.Versioning;
 
 namespace NuGet.CommandLine.XPlat
 {
@@ -24,7 +22,7 @@ namespace NuGet.CommandLine.XPlat
                 addpkg.Option(
                     CommandConstants.ForceEnglishOutputOption,
                     Strings.ForceEnglishOutput_Description,
-                    CommandOptionType.NoValue);       
+                    CommandOptionType.NoValue);
 
                 var id = addpkg.Option(
                     "--package",
@@ -85,7 +83,6 @@ namespace NuGet.CommandLine.XPlat
                     {
                         ValidateArgument(dgFilePath, addpkg.Name);
                     }
-                    // validate prerelease option and specific version are not in the same command
                     var logger = getLogger();
                     var noVersion = !version.HasValue();
                     var packageVersion = version.HasValue() ? version.Value() : null;

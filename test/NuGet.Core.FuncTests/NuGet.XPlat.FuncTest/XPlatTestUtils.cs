@@ -212,7 +212,8 @@ namespace NuGet.XPlat.FuncTest
         public static PackageReferenceArgs GetPackageReferenceArgs(string packageId, SimpleTestProjectContext project)
         {
             var logger = new TestCommandOutputLogger();
-            return new PackageReferenceArgs(project.ProjectPath, logger) {
+            return new PackageReferenceArgs(project.ProjectPath, logger)
+            {
                 PackageId = packageId
             };
         }

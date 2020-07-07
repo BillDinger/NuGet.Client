@@ -37,14 +37,14 @@ namespace NuGet.CommandLine.XPlat.Utility
                 packageReferenceArgs.Logger.LogWarning(string.Format(CultureInfo.CurrentCulture,
                     Strings.Warn_AddPkgWithoutRestore));
 
-
                 VersionRange versionRange = default;
                 if (packageReferenceArgs.NoVersion)
                 {
                     versionRange = packageReferenceArgs.Prerelease ?
                                         VersionRange.Parse("*-*") :
                                         VersionRange.Parse("*");
-                } else
+                }
+                else
                 {
                     versionRange = VersionRange.Parse(packageReferenceArgs.PackageVersion);
                 }
@@ -105,7 +105,11 @@ namespace NuGet.CommandLine.XPlat.Utility
             if (packageReferenceArgs.NoVersion)
             {
                 var latestVersion = await GetLatestVersion(originalPackageSpec, packageReferenceArgs.PackageId, packageReferenceArgs.Logger, packageReferenceArgs.Prerelease);
-                packageDependency = new PackageDependency(packageReferenceArgs.PackageId, VersionRange.Parse(latestVersion.ToString()));
+                if (latestVersion == null)
+                {
+                    throw new CommandException(string.Format(CultureInfo.CurrentCulture, Strings.Error_NoPrereleaseVersions));
+                }
+                packageDependency = new PackageDependency(packageReferenceArgs.PackageId, new VersionRange(minVersion: latestVersion, includeMinVersion: true));
             }
             else
             {
@@ -181,7 +185,7 @@ namespace NuGet.CommandLine.XPlat.Utility
                     packageReferenceArgs.ProjectPath));
 
                 // generate a library dependency with all the metadata like Include, Exlude and SuppressParent
-                var libraryDependency = GenerateLibraryDependency(updatedPackageSpec, packageReferenceArgs, restorePreviewResult, userSpecifiedFrameworks);
+                var libraryDependency = GenerateLibraryDependency(updatedPackageSpec, packageReferenceArgs, restorePreviewResult, userSpecifiedFrameworks, packageDependency);
 
                 msBuild.AddPackageReference(packageReferenceArgs.ProjectPath, libraryDependency);
             }
@@ -199,7 +203,7 @@ namespace NuGet.CommandLine.XPlat.Utility
                     .Where(s => compatibleFrameworks.Contains(NuGetFramework.Parse(s)));
 
                 // generate a library dependency with all the metadata like Include, Exlude and SuppressParent
-                var libraryDependency = GenerateLibraryDependency(updatedPackageSpec, packageReferenceArgs, restorePreviewResult, userSpecifiedFrameworks);
+                var libraryDependency = GenerateLibraryDependency(updatedPackageSpec, packageReferenceArgs, restorePreviewResult, userSpecifiedFrameworks, packageDependency);
 
                 msBuild.AddPackageReferencePerTFM(packageReferenceArgs.ProjectPath,
                     libraryDependency,
@@ -215,19 +219,22 @@ namespace NuGet.CommandLine.XPlat.Utility
         public static async Task<NuGetVersion> GetLatestVersion(PackageSpec originalPackageSpec, string packageId, ILogger logger, bool prerelease)
         {
             IList<PackageSource> sources = GetLatestVersionUtility.EvaluateSources(originalPackageSpec.RestoreMetadata.Sources, originalPackageSpec.RestoreMetadata.ConfigFilePaths);
-            return await GetLatestVersionUtility.GetLatestVersionFromSources(sources, logger, packageId, prerelease); ;
+
+            return await GetLatestVersionUtility.GetLatestVersionFromSources(sources, logger, packageId, prerelease);
         }
+
         private static LibraryDependency GenerateLibraryDependency(
             PackageSpec project,
             PackageReferenceArgs packageReferenceArgs,
             RestoreResultPair restorePreviewResult,
-            IEnumerable<NuGetFramework> UserSpecifiedFrameworks)
+            IEnumerable<NuGetFramework> UserSpecifiedFrameworks,
+            PackageDependency packageDependency)
         {
             // get the package resolved version from restore preview result
             var resolvedVersion = GetPackageVersionFromRestoreResult(restorePreviewResult, packageReferenceArgs, UserSpecifiedFrameworks);
 
             // calculate correct package version to write in project file
-            var version = VersionRange.Parse(packageReferenceArgs.PackageVersion);
+            var version = packageDependency.VersionRange;
 
             // If the user did not specify a version then write the exact resolved version
             if (packageReferenceArgs.NoVersion)

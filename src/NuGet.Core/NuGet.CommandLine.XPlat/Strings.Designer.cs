@@ -448,7 +448,7 @@ namespace NuGet.CommandLine.XPlat {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Both operations, --prerelease and --version, are not supported in the same command. Plsease specify only one operation..
+        ///   Looks up a localized string similar to The --prerelease and --version options are not supported in the same command..
         /// </summary>
         internal static string Error_PrereleaseWhenVersionSpecified {
             get {

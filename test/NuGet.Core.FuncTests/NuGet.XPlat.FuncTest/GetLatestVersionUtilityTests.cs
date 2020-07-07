@@ -1,6 +1,7 @@
 // Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -20,7 +21,7 @@ namespace NuGet.XPlat.FuncTest
     public class GetLatestVersionUtilityTests
     {
         [Fact]
-        public void EvaluateSources_Success()
+        public void EvaluateSources_GivenConfigWithCredentials_ReturnsPackageSourceWithCredentials()
         {
             using (var mockBaseDirectory = TestDirectory.Create())
             {
@@ -191,9 +192,9 @@ namespace NuGet.XPlat.FuncTest
             using (var testDirectory = TestDirectory.Create())
             {
                 //Arrange
-                var processors = 16;
-                var sources = new PackageSource[16];
-                var packages = new SimpleTestPackageContext[16];
+                var processors = Environment.ProcessorCount;
+                var sources = new PackageSource[processors];
+                var packages = new SimpleTestPackageContext[processors];
                 for (var i = 0; i < processors; i++)
                 {
                     var sourcePath = Path.Combine(testDirectory.Path, "Source" + i.ToString());
@@ -207,7 +208,7 @@ namespace NuGet.XPlat.FuncTest
                 var logger = NullLogger.Instance;
                 var result = await GetLatestVersionUtility.GetLatestVersionFromSources(sources, logger, packages.Last().Id, false);
 
-                //Asert
+                //Assert
                 Assert.Equal(packages.Last().Identity.Version, result);
             }
         }

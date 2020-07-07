@@ -716,7 +716,7 @@ For more information, visit https://docs.nuget.org/docs/reference/command-line-r
     <value>Consider prerelease packages when determining the latest version to install.</value>
   </data>
   <data name="Error_PrereleaseWhenVersionSpecified" xml:space="preserve">
-    <value>Both operations, --prerelease and --version, are not supported in the same command. Plsease specify only one operation.</value>
+    <value>The --prerelease and --version options are not supported in the same command.</value>
   </data>
   <data name="Error_NoPrereleaseVersions" xml:space="preserve">
     <value>There are no stable version available for this package. Try adding the prerelease option to add the latest non stable version available.</value>

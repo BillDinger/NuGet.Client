@@ -216,8 +216,7 @@ namespace NuGet.XPlat.FuncTest
                     () => logger,
                     () => mockCommandRunner.Object);
 
-                // Act
-                // Assert
+                // Act & Assert
                 Assert.Throws<ArgumentException>(() => testApp.Execute(argList.ToArray()));
                 XPlatTestUtils.DisposeTemporaryFile(projectPath);
             }

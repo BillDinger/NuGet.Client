@@ -3,7 +3,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -17,6 +16,14 @@ namespace NuGet.CommandLine.XPlat.Utility
 {
     public static class GetLatestVersionUtility
     {
+        /// <summary>
+        /// Return the latest version available in the sources
+        /// </summary>
+        /// <param name="sources">Sources to look at</param>
+        /// <param name="logger">Logger</param>
+        /// <param name="packageId">Package to look for</param>
+        /// <param name="prerelease">Whether to include prerelease versions</param>
+        /// <returns></returns>
         public static async Task<NuGetVersion> GetLatestVersionFromSources(IList<PackageSource> sources, ILogger logger, string packageId, bool prerelease)
         {
             var maxTasks = Environment.ProcessorCount;
@@ -38,13 +45,24 @@ namespace NuGet.CommandLine.XPlat.Utility
 
             foreach (var t in tasks)
             {
-                latestReleaseList.Add(await t);
+                var result = await t;
+                if(result != null)
+                {
+                    latestReleaseList.Add(await t);
+                }
             }
 
-            ValidateVersion(latestReleaseList);
             return latestReleaseList.Max();
         }
 
+        /// <summary>
+        /// Return the latest version of the source
+        /// </summary>
+        /// <param name="source">Source to look at</param>
+        /// <param name="logger">Logger</param>
+        /// <param name="packageId">Package to look for</param>
+        /// <param name="prerelease">Whether to include prerelease versions</param>
+        /// <returns></returns>
         public static async Task<NuGetVersion> GetLatestVersionFromSource(PackageSource source, ILogger logger, string packageId, bool prerelease)
         {
             SourceRepository repository = Repository.Factory.GetCoreV3(source);
@@ -65,6 +83,12 @@ namespace NuGet.CommandLine.XPlat.Utility
             }
         }
 
+        /// <summary>
+        /// Returns the PackageSource with its credentials if available
+        /// </summary>
+        /// <param name="requestedSources">Sources to match</param>
+        /// <param name="configFilePaths">Config to use for credentials</param>
+        /// <returns></returns>
         public static List<PackageSource> EvaluateSources(IList<PackageSource> requestedSources, IList<string> configFilePaths)
         {
             using (var settingsLoadingContext = new SettingsLoadingContext())
@@ -89,14 +113,6 @@ namespace NuGet.CommandLine.XPlat.Utility
                 }
 
                 return packageSources;
-            }
-        }
-
-        private static void ValidateVersion(List<NuGetVersion> versions)
-        {
-            if (versions.Count == 1 && versions[0] == null)
-            {
-                throw new ArgumentException(string.Format(CultureInfo.CurrentCulture, Strings.Error_NoPrereleaseVersions));
             }
         }
     }

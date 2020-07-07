@@ -107,7 +107,7 @@ namespace NuGet.CommandLine.XPlat.Utility
                 var latestVersion = await GetLatestVersion(originalPackageSpec, packageReferenceArgs.PackageId, packageReferenceArgs.Logger, packageReferenceArgs.Prerelease);
                 if (latestVersion == null)
                 {
-                    throw new CommandException(string.Format(CultureInfo.CurrentCulture, Strings.Error_NoPrereleaseVersions));
+                    throw new CommandException(string.Format(CultureInfo.CurrentCulture, Strings.Error_NoVersionsAvailable, packageReferenceArgs.PackageId));
                 }
                 packageDependency = new PackageDependency(packageReferenceArgs.PackageId, new VersionRange(minVersion: latestVersion, includeMinVersion: true));
             }
@@ -233,14 +233,8 @@ namespace NuGet.CommandLine.XPlat.Utility
             // get the package resolved version from restore preview result
             var resolvedVersion = GetPackageVersionFromRestoreResult(restorePreviewResult, packageReferenceArgs, UserSpecifiedFrameworks);
 
-            // calculate correct package version to write in project file
+            // correct package version to write in project file
             var version = packageDependency.VersionRange;
-
-            // If the user did not specify a version then write the exact resolved version
-            if (packageReferenceArgs.NoVersion)
-            {
-                version = new VersionRange(resolvedVersion);
-            }
 
             // update default packages path if user specified custom package directory
             var packagesPath = project.RestoreMetadata.PackagesPath;

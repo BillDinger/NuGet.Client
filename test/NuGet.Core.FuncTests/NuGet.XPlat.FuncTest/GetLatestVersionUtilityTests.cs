@@ -135,64 +135,12 @@ namespace NuGet.XPlat.FuncTest
         }
 
         [Fact]
-        public async Task GetLatestVersionFromSources_WithMultipleSources_SelectsLatestVersion()
-        {
-            using (var testDirectory = TestDirectory.Create())
-            {
-                //Arrange
-                var sourceAPath = Path.Combine(testDirectory.Path, "SourceA");
-                var sourceBPath = Path.Combine(testDirectory.Path, "SourceB");
-
-                var packageX100 = new SimpleTestPackageContext("packageX", "1.0.0");
-                var packageX101 = new SimpleTestPackageContext("packageX", "1.0.1");
-
-                await SimpleTestPackageUtility.CreatePackagesAsync(sourceAPath, packageX100);
-                await SimpleTestPackageUtility.CreatePackagesAsync(sourceBPath, packageX101);
-
-                var sources = new PackageSource[] { new PackageSource(sourceAPath), new PackageSource(sourceBPath) };
-
-                //Act
-                var logger = NullLogger.Instance;
-                var result = await GetLatestVersionUtility.GetLatestVersionFromSources(sources, logger, packageX101.Id, false);
-
-                //Asert
-                Assert.Equal(packageX101.Identity.Version, result);
-            }
-        }
-
-        [Fact]
-        public async Task GetLatestVersionFromSources_WithMultipleSources_PackageNotAvailable()
-        {
-            using (var testDirectory = TestDirectory.Create())
-            {
-                //Arrange
-                var sourceAPath = Path.Combine(testDirectory.Path, "SourceA");
-                var sourceBPath = Path.Combine(testDirectory.Path, "SourceB");
-
-                var packageX100 = new SimpleTestPackageContext("packageX", "1.0.0");
-                var packageX101 = new SimpleTestPackageContext("packageX", "1.0.1");
-
-                await SimpleTestPackageUtility.CreatePackagesAsync(sourceAPath, packageX100);
-                await SimpleTestPackageUtility.CreatePackagesAsync(sourceBPath, packageX101);
-
-                var sources = new PackageSource[] { new PackageSource(sourceAPath), new PackageSource(sourceBPath) };
-
-                //Act
-                var logger = NullLogger.Instance;
-                var result = await GetLatestVersionUtility.GetLatestVersionFromSources(sources, logger, "packageY", false);
-
-                //Asert
-                Assert.Equal(null, result);
-            }
-        }
-
-        [Fact]
         public async Task GetLatestVersionFromSources_WithMoreSourcesThanProcessorCount()
         {
             using (var testDirectory = TestDirectory.Create())
             {
-                //Arrange
-                var processors = Environment.ProcessorCount;
+                // Arrange
+                var processors = Environment.ProcessorCount * 2;
                 var sources = new PackageSource[processors];
                 var packages = new SimpleTestPackageContext[processors];
                 for (var i = 0; i < processors; i++)
@@ -204,11 +152,11 @@ namespace NuGet.XPlat.FuncTest
                     packages[i] = packageX;
                 }
 
-                //Act
+                // Act
                 var logger = NullLogger.Instance;
                 var result = await GetLatestVersionUtility.GetLatestVersionFromSources(sources, logger, packages.Last().Id, false);
 
-                //Assert
+                // Assert
                 Assert.Equal(packages.Last().Identity.Version, result);
             }
         }

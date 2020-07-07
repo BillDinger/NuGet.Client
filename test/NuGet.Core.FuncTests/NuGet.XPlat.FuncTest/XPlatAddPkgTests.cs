@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -10,6 +11,7 @@ using Microsoft.Extensions.CommandLineUtils;
 using Moq;
 using NuGet.CommandLine.XPlat;
 using NuGet.CommandLine.XPlat.Utility;
+using NuGet.Commands;
 using NuGet.Common;
 using NuGet.Packaging;
 using NuGet.Packaging.Core;
@@ -217,7 +219,8 @@ namespace NuGet.XPlat.FuncTest
                     () => mockCommandRunner.Object);
 
                 // Act & Assert
-                Assert.Throws<ArgumentException>(() => testApp.Execute(argList.ToArray()));
+                var exception = Assert.Throws<ArgumentException>(() => testApp.Execute(argList.ToArray()));
+                Assert.Equal(Strings.Error_PrereleaseWhenVersionSpecified, exception.Message);
                 XPlatTestUtils.DisposeTemporaryFile(projectPath);
             }
         }
@@ -229,6 +232,7 @@ namespace NuGet.XPlat.FuncTest
         [InlineData("*")]
         [InlineData("1.*")]
         [InlineData("1.0.*")]
+        [InlineData("[1.0.*, )")]
         public async Task AddPkg_UnconditionalAdd_Success(string userInputVersion)
         {
             // Arrange
@@ -311,7 +315,7 @@ namespace NuGet.XPlat.FuncTest
 
         [Theory]
         [MemberData(nameof(AddPkg_PackageVersionsLatestPrereleasNoStableAvailableData))]
-        public async Task AddPkg_UnconditionalAddPrereleaseNoStableAvailable(string[] inputVersions, bool prerelease)
+        public async Task AddPkg_NoPackageAvailable(string[] inputVersions, bool prerelease)
         {
             // Arrange
             using (var pathContext = new SimpleTestPathContext())
@@ -329,9 +333,9 @@ namespace NuGet.XPlat.FuncTest
                 var commandRunner = new AddPackageReferenceCommandRunner();
                 var msBuild = MsBuild;
 
-                // Act
-                // Assert
-                await Assert.ThrowsAsync<ArgumentException>(() => commandRunner.ExecuteCommand(packageArgs, msBuild));
+                // Act & Assert
+                var result = await Assert.ThrowsAsync<CommandException>(() => commandRunner.ExecuteCommand(packageArgs, msBuild));
+                Assert.Equal(string.Format(CultureInfo.CurrentCulture, Strings.Error_NoVersionsAvailable, packages[0].Id), result.Message);
             }
         }
 
